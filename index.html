@@ -3,110 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Multi Generator - Responsive</title>
+    <title>QR Code Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         :root {
-            --primary-color: #2563eb;
-            --bg-color: #f8fafc;
-            --border-color: #e2e8f0;
+            --primary: #2563eb;
+            --bg: #f1f5f9;
+            --white: #ffffff;
+            --text: #1e293b;
         }
 
-        * {
-            box-sizing: border-box; /* Đảm bảo padding không làm vỡ layout */
-        }
+        * { box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
+            font-family: -apple-system, system-ui, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             margin: 0;
-            padding: 10px; /* Giảm padding trên mobile */
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
         }
 
-        .container {
+        .main-container {
             width: 100%;
-            max-width: 800px;
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            max-width: 900px;
+            background: var(--white);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-top: 20px;
         }
 
-        h1 { 
-            color: #1e293b; 
-            text-align: center; 
-            margin-top: 0;
-            font-size: 1.5rem; /* Responsive font size */
+        /* Tabs Header */
+        .tabs {
+            display: flex;
+            background: #e2e8f0;
+            border-bottom: 2px solid #cbd5e1;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: #64748b;
+            background: #e2e8f0;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--white);
+            color: var(--primary);
+            border-bottom: 3px solid var(--primary);
+        }
+
+        /* Content Area */
+        .tab-content {
+            display: none;
+            padding: 2rem;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         textarea {
             width: 100%;
-            height: 150px;
+            height: 120px;
             padding: 12px;
             border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            resize: vertical;
+            border-radius: 8px;
             font-family: monospace;
+            margin-bottom: 1rem;
         }
 
-        .controls {
-            margin-top: 1rem;
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        /* Responsive cho nút bấm trên màn hình cực nhỏ */
-        @media (max-width: 400px) {
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            button { width: 100%; }
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
-        button:hover { background-color: #1d4ed8; }
-
-        /* --- GRID QR CODE RESPONSIVE --- */
+        /* Multi QR Grid */
         #qrcode-grid {
             display: grid;
-            gap: 15px;
-            margin-top: 30px;
-            width: 100%;
-            max-width: 900px;
-            /* Mặc định 1 cột cho Mobile */
-            grid-template-columns: 1fr; 
+            gap: 20px;
+            margin-top: 20px;
+            grid-template-columns: 1fr;
         }
 
-        /* Màn hình Tablet (trên 600px): 2 cột */
-        @media (min-width: 600px) {
-            #qrcode-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+        @media (min-width: 600px) { #qrcode-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 900px) { #qrcode-grid { grid-template-columns: repeat(3, 1fr); } }
 
-        /* Màn hình Desktop (trên 900px): 3 cột */
-        @media (min-width: 900px) {
-            #qrcode-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-            body { padding: 20px; }
+        /* Single QR Center */
+        .single-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 250px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
         }
 
         .qr-item {
@@ -114,99 +113,141 @@
             flex-direction: column;
             align-items: center;
             padding: 15px;
-            border: 1px solid var(--border-color);
+            border: 1px solid #e2e8f0;
             background: white;
-            border-radius: 4px;
-            page-break-inside: avoid;
-        }
-
-        /* Đảm bảo ảnh QR không bị tràn container */
-        .qr-item img, .qr-item canvas {
-            max-width: 100%;
-            height: auto !important;
+            border-radius: 8px;
         }
 
         .qr-label {
             margin-top: 10px;
-            font-size: 0.85rem;
-            color: #475569;
+            font-size: 0.8rem;
+            color: #64748b;
             word-break: break-all;
             text-align: center;
         }
 
-        /* Tối ưu in ấn: Ép buộc về 3 cột để tiết kiệm giấy A4 */
+        button.gen-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+        }
+
         @media print {
             .no-print { display: none; }
-            body { background: white; padding: 0; }
-            #qrcode-grid { 
-                display: grid !important;
-                grid-template-columns: repeat(3, 10cm) !important; /* Đảm bảo 3 cột khi in */
-                grid-template-columns: repeat(3, 1fr) !important;
-                margin-top: 0;
-            }
-            .qr-item { border: 1px solid #eee; }
+            body { padding: 0; background: white; }
+            .main-container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .tab-content.active { display: block; padding: 0; }
+            #qrcode-grid { grid-template-columns: repeat(3, 1fr) !important; }
         }
     </style>
 </head>
 <body>
 
-<div class="container no-print">
-    <h1>QR Code Multi Generator</h1>
-    <p style="color: #64748b; font-size: 0.9rem; text-align: center;">Nhập tối đa 30 mã, mỗi mã một dòng.</p>
-    <textarea id="inputCodes" placeholder="123456789&#10;123498756..."></textarea>
-    
-    <div class="controls">
-        <span id="lineCount" style="font-size: 0.9rem; font-weight: 500;">0 / 30 dòng</span>
-        <button onclick="generateQRs()">Tạo mã QR</button>
+<div class="main-container">
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="openTab(event, 'multiTab')">Multi QRCode</button>
+        <button class="tab-btn" onclick="openTab(event, 'singleTab')">Single QRCode</button>
+    </div>
+
+    <div id="multiTab" class="tab-content active">
+        <p style="font-size: 0.9rem; color: #64748b;">Mỗi dòng một mã (tối đa 30 dòng):</p>
+        <textarea id="multiInput" placeholder="123456&#10;789012..."></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span id="multiCount" style="font-size: 0.85rem;">0 / 30 dòng</span>
+            <button class="gen-btn" style="width: auto;" onclick="generateMulti()">Tạo danh sách QR</button>
+        </div>
+        <div id="qrcode-grid"></div>
+    </div>
+
+    <div id="singleTab" class="tab-content">
+        <p style="font-size: 0.9rem; color: #64748b;">Nhập nội dung (Tự động tạo sau 0.5s):</p>
+        <textarea id="singleInput" placeholder="Nhập bất kỳ văn bản hoặc link nào ở đây..."></textarea>
+        <div class="single-display" id="singleResult">
+            <p id="placeholder-text" style="color: #cbd5e1;">QR Code sẽ xuất hiện ở đây</p>
+        </div>
     </div>
 </div>
 
-<div id="qrcode-grid"></div>
-
 <script>
-    const textarea = document.getElementById('inputCodes');
-    const lineCountDisplay = document.getElementById('lineCount');
+    // --- CHỨC NĂNG CHUYỂN TABS ---
+    function openTab(evt, tabName) {
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
+        
+        tablinks = document.getElementsByClassName("tab-btn");
+        for (i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
+        
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
+    }
+
+    // --- LOGIC TAB MULTI ---
+    const multiInput = document.getElementById('multiInput');
+    const multiCount = document.getElementById('multiCount');
     const grid = document.getElementById('qrcode-grid');
 
-    textarea.addEventListener('input', () => {
-        const lines = textarea.value.split('\n').filter(line => line.trim() !== '');
-        lineCountDisplay.textContent = `${lines.length} / 30 dòng`;
-        lineCountDisplay.style.color = lines.length > 30 ? '#ef4444' : '#64748b';
+    multiInput.addEventListener('input', () => {
+        const lines = multiInput.value.split('\n').filter(l => l.trim() !== '');
+        multiCount.textContent = `${lines.length} / 30 dòng`;
+        multiCount.style.color = lines.length > 30 ? 'red' : '#64748b';
     });
 
-    function generateQRs() {
-        const text = textarea.value.trim();
-        if (!text) return alert("Vui lòng nhập dữ liệu!");
-
-        const lines = text.split('\n')
-                          .map(l => l.trim())
-                          .filter(l => l !== '')
-                          .slice(0, 30);
-
+    function generateMulti() {
+        const lines = multiInput.value.split('\n').map(l => l.trim()).filter(l => l !== '').slice(0, 30);
         grid.innerHTML = '';
+        if (lines.length === 0) return alert("Vui lòng nhập dữ liệu!");
 
-        lines.forEach((line) => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'qr-item';
+        lines.forEach(line => {
+            const wrap = document.createElement('div');
+            wrap.className = 'qr-item';
+            const qrBox = document.createElement('div');
+            const lb = document.createElement('div');
+            lb.className = 'qr-label';
+            lb.textContent = line;
             
-            const qrDiv = document.createElement('div');
-            const label = document.createElement('div');
-            label.className = 'qr-label';
-            label.textContent = line;
+            wrap.appendChild(qrBox);
+            wrap.appendChild(lb);
+            grid.appendChild(wrap);
 
-            itemDiv.appendChild(qrDiv);
-            itemDiv.appendChild(label);
-            grid.appendChild(itemDiv);
-
-            new QRCode(qrDiv, {
-                text: line,
-                width: 180, // Tăng nhẹ kích thước để rõ nét hơn
-                height: 180,
-                colorDark : "#000000",
-                colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.M
-            });
+            new QRCode(qrBox, { text: line, width: 140, height: 140 });
         });
+    }
+
+    // --- LOGIC TAB SINGLE (DEBOUNCE 0.5S) ---
+    const singleInput = document.getElementById('singleInput');
+    const singleResult = document.getElementById('singleResult');
+    let typingTimer;
+    const doneTypingInterval = 500; // 0.5 giây
+
+    singleInput.addEventListener('keyup', () => {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(generateSingle, doneTypingInterval);
+    });
+
+    singleInput.addEventListener('keydown', () => {
+        clearTimeout(typingTimer);
+    });
+
+    function generateSingle() {
+        const val = singleInput.value.trim();
+        singleResult.innerHTML = ''; // Xóa QR cũ
+
+        if (val) {
+            new QRCode(singleResult, {
+                text: val,
+                width: 250,
+                height: 250,
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } else {
+            singleResult.innerHTML = '<p style="color: #cbd5e1;">QR Code sẽ xuất hiện ở đây</p>';
+        }
     }
 </script>
 
