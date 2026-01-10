@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Pro - Siêu ổn định</title>
+    <title>QR Code Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.1/qrcode.min.js"></script>
     <style>
         :root {
@@ -11,6 +11,7 @@
             --bg: #f8fafc;
             --white: #ffffff;
             --text: #1e293b;
+            --accent: #f59e0b;
         }
 
         * { box-sizing: border-box; }
@@ -27,7 +28,7 @@
 
         .main-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             background: var(--white);
             border-radius: 12px;
             box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
@@ -74,16 +75,56 @@
 
         textarea {
             width: 100%;
-            height: 120px;
+            height: 180px;
             padding: 12px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
-            font-family: inherit;
             font-size: 1rem;
             margin-bottom: 1rem;
+            font-family: monospace;
         }
 
-        /* Grid hiển thị 3x3 */
+        .settings-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        input[type="number"], select {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #cbd5e1;
+            outline: none;
+            width: 80px;
+        }
+
+        .info-badge {
+            background: #dbeafe;
+            color: #1e40af;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
         #qrcode-grid {
             display: grid;
             gap: 20px;
@@ -102,13 +143,18 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             background: #fff;
-            page-break-inside: avoid;
+            position: relative;
         }
 
-        canvas {
-            max-width: 100%;
-            height: auto !important;
+        .qr-index {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 0.7rem;
+            color: #94a3b8;
         }
+
+        canvas { max-width: 100%; height: auto !important; }
 
         .qr-label {
             margin-top: 10px;
@@ -116,17 +162,6 @@
             color: #475569;
             text-align: center;
             word-break: break-all;
-        }
-
-        .single-display {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 320px;
-            border: 2px dashed #e2e8f0;
-            border-radius: 12px;
-            background: #fafafa;
         }
 
         .btn-gen {
@@ -141,11 +176,23 @@
 
         .btn-gen:hover { opacity: 0.9; }
 
+        .single-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            border: 2px dashed #e2e8f0;
+            border-radius: 12px;
+            background: #fafafa;
+        }
+
         @media print {
-            .no-print { display: none; }
+            .no-print, .settings-bar { display: none; }
             body { padding: 0; background: white; }
-            .main-container { box-shadow: none; border: none; width: 100%; }
-            #qrcode-grid { grid-template-columns: repeat(3, 1fr) !important; }
+            .main-container { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            #qrcode-grid { grid-template-columns: repeat(3, 1fr) !important; margin-top: 0; }
+            .qr-item { border: 1px solid #eee; }
         }
     </style>
 </head>
@@ -153,37 +200,56 @@
 
 <div class="main-container">
     <div class="tabs no-print">
-        <button class="tab-btn active" onclick="openTab(event, 'multiTab')">Multi QRCode</button>
+        <button class="tab-btn active" onclick="openTab(event, 'multiTab')">Multi QRCode (Tối đa 100)</button>
         <button class="tab-btn" onclick="openTab(event, 'singleTab')">Single QRCode</button>
     </div>
 
     <div id="multiTab" class="tab-content active">
-        <p style="font-size: 0.9rem; color: #64748b;">Mỗi dòng một mã (Tiếng Việt chuẩn, tối đa 30 dòng):</p>
-        <textarea id="multiInput" placeholder="Chào bạn&#10;Hà Nội&#10;Đà Nẵng..."></textarea>
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-            <span id="multiCount" style="font-size: 0.85rem; font-weight: bold;">0 / 30 dòng</span>
-            <button class="btn-gen" onclick="generateMulti()">Tạo danh sách QR</button>
+        <textarea id="multiInput" placeholder="Dán danh sách mã vào đây (ví dụ 120 dòng)..."></textarea>
+        
+        <div class="settings-bar no-print">
+            <div class="setting-item">
+                <label>Sửa lỗi:</label>
+                <select id="multiEcl">
+                    <option value="L">L (7%)</option>
+                    <option value="M" selected>M (15%)</option>
+                    <option value="Q">Q (25%)</option>
+                    <option value="H">H (30%)</option>
+                </select>
+            </div>
+
+            <div class="setting-item">
+                <label title="Ví dụ: Khoảng cách = 6 sẽ lấy dòng 1, 7, 13...">Khoảng cách (Step):</label>
+                <input type="number" id="stepInput" value="1" min="1" oninput="updateStats()">
+            </div>
+
+            <div style="flex-grow: 1; display: flex; justify-content: flex-end; align-items: center; gap: 15px;">
+                <span id="stats" class="info-badge">Tổng: 0 dòng | Sẽ tạo: 0 QR</span>
+                <button class="btn-gen" onclick="generateMulti()">Tạo danh sách</button>
+            </div>
         </div>
+
         <div id="qrcode-grid"></div>
     </div>
 
     <div id="singleTab" class="tab-content">
-        <p style="font-size: 0.9rem; color: #64748b;">Tự động tạo mã sau 0.5s dừng gõ:</p>
-        <textarea id="singleInput" placeholder="Nhập văn bản Tiếng Việt bất kỳ..."></textarea>
+        <textarea id="singleInput" placeholder="Nhập nội dung Tiếng Việt..."></textarea>
+        <div class="settings-bar no-print">
+            <label>Sửa lỗi (ECL): </label>
+            <select id="singleEcl" onchange="generateSingle()">
+                <option value="L">L (7%)</option>
+                <option value="M">M (15%)</option>
+                <option value="Q">Q (25%)</option>
+                <option value="H" selected>H (30%)</option>
+            </select>
+        </div>
         <div class="single-display" id="singleResult">
-            <p id="placeholder" style="color: #94a3b8;">Đang chờ dữ liệu...</p>
+            <p style="color: #94a3b8;">Đang chờ dữ liệu...</p>
         </div>
     </div>
 </div>
 
 <script>
-    // Kiểm tra xem thư viện đã load thành công chưa
-    window.onload = () => {
-        if (typeof QRCode === 'undefined') {
-            alert('Lỗi: Không thể tải thư viện QRCode. Vui lòng kiểm tra kết nối internet.');
-        }
-    };
-
     function openTab(evt, tabName) {
         const contents = document.getElementsByClassName("tab-content");
         for (let c of contents) c.style.display = "none";
@@ -193,61 +259,72 @@
         evt.currentTarget.classList.add("active");
     }
 
-    // Cấu hình mã QR tối ưu (Native UTF-8)
-    const qrConfig = {
-        errorCorrectionLevel: 'M',
-        margin: 2,
-        scale: 4,
-        color: {
-            dark: "#000000",
-            light: "#ffffff"
-        }
-    };
-
-    // --- XỬ LÝ MULTI ---
     const multiInput = document.getElementById('multiInput');
-    const multiCount = document.getElementById('multiCount');
+    const stepInput = document.getElementById('stepInput');
+    const stats = document.getElementById('stats');
     const grid = document.getElementById('qrcode-grid');
 
-    multiInput.addEventListener('input', () => {
+    function updateStats() {
         const lines = multiInput.value.split('\n').filter(l => l.trim() !== '');
-        multiCount.textContent = `${lines.length} / 30 dòng`;
-    });
+        const step = parseInt(stepInput.value) || 1;
+        
+        let targetCount = 0;
+        for (let i = 0; i < lines.length; i += step) {
+            targetCount++;
+        }
+        
+        // Giới hạn hiển thị tối đa 100 QR để tránh treo máy
+        const finalCount = Math.min(targetCount, 100);
+        stats.textContent = `Tổng: ${lines.length} dòng | Sẽ tạo: ${finalCount} QR`;
+        stats.style.background = targetCount > 100 ? '#fee2e2' : '#dbeafe';
+        stats.style.color = targetCount > 100 ? '#991b1b' : '#1e40af';
+    }
+
+    multiInput.addEventListener('input', updateStats);
 
     async function generateMulti() {
-        const lines = multiInput.value.split('\n')
-                                     .map(l => l.trim())
-                                     .filter(l => l !== '')
-                                     .slice(0, 30);
+        const lines = multiInput.value.split('\n').map(l => l.trim()).filter(l => l !== '');
+        const step = parseInt(stepInput.value) || 1;
+        const ecl = document.getElementById('multiEcl').value;
         
         grid.innerHTML = '';
-        if (lines.length === 0) return;
+        let processed = 0;
 
-        for (const line of lines) {
+        for (let i = 0; i < lines.length; i += step) {
+            if (processed >= 100) break; // Giới hạn 100 QR
+
+            const text = lines[i];
             const wrap = document.createElement('div');
             wrap.className = 'qr-item';
             
+            const indexLabel = document.createElement('span');
+            indexLabel.className = 'qr-index';
+            indexLabel.textContent = `Dòng #${i + 1}`;
+
             const canvas = document.createElement('canvas');
             const lb = document.createElement('div');
             lb.className = 'qr-label';
-            lb.textContent = line;
+            lb.textContent = text;
 
+            wrap.appendChild(indexLabel);
             wrap.appendChild(canvas);
             wrap.appendChild(lb);
             grid.appendChild(wrap);
 
-            // Thư viện qrcode này hỗ trợ await và vẽ trực tiếp lên canvas cực chuẩn
             try {
-                await QRCode.toCanvas(canvas, line, { ...qrConfig, width: 160 });
-            } catch (err) {
-                console.error('Lỗi tạo mã QR:', err);
-            }
+                await QRCode.toCanvas(canvas, text, { 
+                    errorCorrectionLevel: ecl,
+                    margin: 2,
+                    width: 160
+                });
+            } catch (err) { console.error(err); }
+            
+            processed++;
         }
     }
 
-    // --- XỬ LÝ SINGLE (DEBOUNCE 0.5S) ---
+    // --- LOGIC SINGLE TAB ---
     const singleInput = document.getElementById('singleInput');
-    const singleResult = document.getElementById('singleResult');
     let typingTimer;
 
     singleInput.addEventListener('keyup', () => {
@@ -257,20 +334,25 @@
 
     async function generateSingle() {
         const val = singleInput.value.trim();
+        const res = document.getElementById('singleResult');
+        const ecl = document.getElementById('singleEcl').value;
+        
         if (!val) {
-            singleResult.innerHTML = '<p style="color: #94a3b8;">Đang chờ dữ liệu...</p>';
+            res.innerHTML = '<p style="color: #94a3b8;">Đang chờ dữ liệu...</p>';
             return;
         }
 
         const canvas = document.createElement('canvas');
-        singleResult.innerHTML = '';
-        singleResult.appendChild(canvas);
+        res.innerHTML = '';
+        res.appendChild(canvas);
 
         try {
-            await QRCode.toCanvas(canvas, val, { ...qrConfig, width: 280, errorCorrectionLevel: 'H' });
-        } catch (err) {
-            singleResult.innerHTML = '<p style="color: red;">Không thể tạo QR</p>';
-        }
+            await QRCode.toCanvas(canvas, val, { 
+                errorCorrectionLevel: ecl,
+                margin: 4,
+                width: 320
+            });
+        } catch (err) { res.innerHTML = 'Lỗi!'; }
     }
 </script>
 
